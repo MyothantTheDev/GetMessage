@@ -1,12 +1,21 @@
 import { View, Text, Image, StatusBar, TextInput, TouchableOpacity } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Animated, {FadeInUp, FadeInDown} from "react-native-reanimated";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigation } from "@react-navigation/native";
+import { clearErrors, login } from "../actions/AuthAction";
 
 export default function LoginScreen() {
 
   const disableCLick = useRef(true);
 
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
+
+  const {isAuthenticated, user, error} = useSelector(state => state.auth);
+
   const [confidential, setConfidential] = useState({email: '', password: ''});
+
   const inputConfidential = (item, value) => {
     const input_value = item === 'email' ? {email: value} : {password: value};
     setConfidential(confidential => ({
@@ -14,12 +23,27 @@ export default function LoginScreen() {
       ...input_value
     }))
   }
+
   const enableClick = (value) => {
     if (value.length >= 8) {
       disableCLick.current = false;
     } else {
       disableCLick.current = true;
     }
+  }
+
+  const gotoMsgScreen = () => {
+    if (isAuthenticated) {
+      navigation.push('MessageScreen');
+    } else {
+      dispatch(clearErrors());
+    }
+  }
+
+  useEffect(gotoMsgScreen, [dispatch, isAuthenticated, user, error]);
+
+  const handleAuth = () => {
+    dispatch(login(confidential.email, confidential.password));
   }
 
   return (
@@ -59,7 +83,7 @@ export default function LoginScreen() {
               className={`w-full p-3 rounded-2xl ${disableCLick.current ? 'bg-gray-400' : 'bg-blue-400'} items-center`}
               disabled={disableCLick.current}
              >
-              <Text className="font-bold text-white text-lg">
+              <Text className="font-bold text-white text-lg" onPress={handleAuth}>
                 Login
               </Text>
             </TouchableOpacity>
